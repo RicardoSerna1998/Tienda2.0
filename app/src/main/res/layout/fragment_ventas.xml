@@ -1,0 +1,54 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:layout_width="match_parent"
+    android:orientation="vertical"
+    android:layout_height="match_parent"
+    tools:context=".ventas.Ventas">
+
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="horizontal">
+        <Button
+            android:id="@+id/BtnHistorial"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:drawableTop="@mipmap/ic_history_black_24dp"
+            android:text=" Historial "
+            android:textSize="18dp" />
+
+        <android.support.v7.widget.SearchView
+            android:id="@+id/ETnombreProducto"
+            android:layout_width="wrap_content"
+            android:layout_height="match_parent"
+            android:layout_weight="1"
+            android:hint="Ingresa el nombre o código"
+            android:inputType="text" />
+
+        <Button
+            android:id="@+id/BtnCarrito"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:drawableTop="@mipmap/ic_shopping_cart_black_24dp"
+            android:text=" Carrito "
+            android:textSize="18dp" />
+    </LinearLayout>
+    <TextView
+        android:id="@+id/textView3"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:gravity="center"
+        android:textSize="18dp"
+        android:text="Productos" />
+    <ScrollView
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:layout_weight="1">
+    <android.support.v7.widget.RecyclerView
+        android:id="@+id/RVproductosVenta"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent">
+    </android.support.v7.widget.RecyclerView>
+    </ScrollView>
+</LinearLayout>

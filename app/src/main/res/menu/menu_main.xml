@@ -1,0 +1,16 @@
+<menu xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
+    tools:context="com.example.ricardosernam.tienda.MainActivity">
+
+    <item
+        android:id="@+id/action_user"
+        android:icon="@mipmap/ic_supervisor_account_black_24dp"
+        android:title="Usuarios"
+        app:showAsAction="ifRoom" />
+    <!--<item
+        android:id="@+id/sync_data"
+        android:icon="@android:drawable/ic_popup_sync"
+        android:title="Usuarios"
+        app:showAsAction="ifRoom" />-->
+</menu>

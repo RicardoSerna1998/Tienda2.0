@@ -1,0 +1,34 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+   android:layout_marginTop="5dp"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    android:background="@android:color/holo_blue_bright"
+    android:orientation="horizontal">
+
+    <TextView
+        android:id="@+id/TVnombre"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:textSize="25dp"
+        android:text="Juan"
+        android:layout_weight="1"/>
+
+    <TextView
+        android:id="@+id/TVpuesto"
+        android:layout_marginLeft="20dp"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:textSize="20dp"
+        android:text="Mesero"
+        android:layout_weight="1"/>
+
+    <android.support.v7.widget.AppCompatRadioButton
+        android:id="@+id/RBactivo"
+        android:layout_width="wrap_content"
+        android:layout_height="match_parent"
+        android:background="@color/rojo"
+        android:checked="true" />
+
+
+</LinearLayout>

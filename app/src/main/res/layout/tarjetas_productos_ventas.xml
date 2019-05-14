@@ -1,0 +1,74 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    android:id="@+id/tarjetaproductos"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    android:layout_marginLeft="3dp"
+    android:layout_marginTop="10dp"
+    android:background="@color/colorAccent"
+    android:orientation="horizontal">
+
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_weight="1"
+        android:orientation="vertical">
+
+
+
+        <android.support.v7.widget.AppCompatTextView
+            android:id="@+id/TVproducto"
+            android:layout_width="match_parent"
+            android:layout_height="50dp"
+            android:layout_gravity="center"
+            android:layout_weight="0"
+            android:gravity="center"
+            android:text="Jitomate"
+            app:autoSizeMaxTextSize="40sp"
+            app:autoSizeMinTextSize="30sp"
+            app:autoSizeStepGranularity="1sp"
+            app:autoSizeTextType="uniform" />
+
+        <android.support.v7.widget.AppCompatTextView
+            android:id="@+id/TVexistentes"
+            android:layout_width="match_parent"
+            android:layout_height="30dp"
+            android:layout_gravity="center"
+            android:layout_weight="5"
+            android:gravity="center"
+            android:text="2000 gramos aún"
+            app:autoSizeMaxTextSize="25sp"
+            app:autoSizeMinTextSize="15sp"
+            app:autoSizeStepGranularity="1sp"
+            app:autoSizeTextType="uniform" />
+    </LinearLayout>
+    <LinearLayout
+        android:orientation="horizontal"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:background="?attr/colorButtonNormal"
+        android:backgroundTint="?attr/colorButtonNormal"
+        android:layout_weight="2">
+    <android.support.v7.widget.AppCompatTextView
+        android:id="@+id/TVprecio"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:layout_weight="1"
+        android:gravity="center_vertical"
+        android:text="$10"
+        app:autoSizeMaxTextSize="40sp"
+        app:autoSizeMinTextSize="20sp"
+        app:autoSizeStepGranularity="1sp"
+        app:autoSizeTextType="uniform" />
+        <Button
+            android:id="@+id/BtnmodificarProducto"
+            android:layout_weight="1"
+            android:layout_gravity="right"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:drawableRight="@mipmap/ic_border_color_black_24dp" />
+
+    </LinearLayout>
+
+</LinearLayout>
