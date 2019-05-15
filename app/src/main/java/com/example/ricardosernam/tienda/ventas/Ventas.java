@@ -1,12 +1,17 @@
 package com.example.ricardosernam.tienda.ventas;
 
 import android.annotation.SuppressLint;
+import android.bluetooth.BluetoothAdapter;
+import android.bluetooth.BluetoothDevice;
+import android.bluetooth.BluetoothSocket;
+import android.content.ContentValues;
 import android.content.Context;
 import android.content.Intent;
 import android.database.Cursor;
 import android.database.sqlite.SQLiteDatabase;
 import android.os.Build;
 import android.os.Bundle;
+import android.os.Handler;
 import android.support.annotation.RequiresApi;
 import android.support.v4.app.Fragment;
 import android.support.v7.app.AppCompatActivity;
@@ -24,6 +29,7 @@ import android.view.View;
 import android.view.ViewGroup;
 import android.widget.Button;
 import android.widget.EditText;
+import android.widget.TextView;
 import android.widget.Toast;
 
 import com.example.ricardosernam.tienda.Carrito.Carrito;
@@ -31,21 +37,48 @@ import com.example.ricardosernam.tienda.DatabaseHelper;
 import com.example.ricardosernam.tienda.provider.ContractParaProductos;
 import com.example.ricardosernam.tienda.R;
 import com.example.ricardosernam.tienda.ventas.Historial.Historial;
+import com.example.ricardosernam.tienda.ventas.Productos.modificarProducto_DialogFragment;
+import com.example.ricardosernam.tienda.ventas.Productos.nuevoProducto_DialogFragment;
 
+import java.io.IOException;
+import java.io.InputStream;
+import java.io.OutputStream;
 import java.util.ArrayList;
+import java.util.Set;
+import java.util.UUID;
+
+import static android.widget.Toast.LENGTH_LONG;
 
 public class Ventas extends Fragment implements KeyListener {
     private SearchView nombreCodigo;
-    private static Cursor fila, filaBusqueda, datoEscaneado, ventas;
+    private static Cursor fila, filaBusqueda, datoEscaneado, ventas, existentes, filaProducto, productoElegido;
     private static SQLiteDatabase db;
+    private static TextView productos;
     private static RecyclerView recycler;
     private static RecyclerView.Adapter adapter;
     private static android.support.v4.app.FragmentManager fm;
     private static RecyclerView.LayoutManager lManager;
-    private Button escanear, carrito, historial;
+    private Button carrito, historial, imprimir, nuevo;
     private android.support.v7.app.ActionBar actionBar;
+    public static ContentValues values = new ContentValues();
 
     private static ArrayList<Productos_class> itemsProductos= new ArrayList <>(); ///Arraylist que contiene los productos///
+
+
+    // will enable user to enter any text to be printed
+    // android built in classes for bluetooth operations
+    BluetoothAdapter mBluetoothAdapter;
+    BluetoothSocket mmSocket;
+    BluetoothDevice mmDevice;
+
+    // needed for communication to bluetooth device / network
+    OutputStream mmOutputStream;
+    InputStream mmInputStream;
+    Thread workerThread;
+
+    byte[] readBuffer;
+    int readBufferPosition;
+    volatile boolean stopWorker;
 
     @Override
     public void onCreate(Bundle savedInstanceState) {
@@ -63,8 +96,14 @@ public class Ventas extends Fragment implements KeyListener {
         historial= view.findViewById(R.id.BtnHistorial);
         actionBar=((AppCompatActivity)getActivity()).getSupportActionBar();
         nombreCodigo=view.findViewById(R.id.ETnombreProducto);
+        imprimir= view.findViewById(R.id.BtnImprimriInventario);
+        nuevo= view.findViewById(R.id.BtnAgregarProducto);
+
+        productos= view.findViewById(R.id.TVproductos);
+
 
         fm=getFragmentManager();
+
 
         carrito.setOnClickListener(new View.OnClickListener() {
             @SuppressLint("NewApi")
@@ -72,7 +111,7 @@ public class Ventas extends Fragment implements KeyListener {
             @Override
             public void onClick(View view) {
                 if(ContractParaProductos.itemsProductosVenta.isEmpty()){
-                    Toast.makeText(getContext(), "No hay productos comprados aun", Toast.LENGTH_SHORT).show();
+                    Toast.makeText(getContext(), "No hay productos comprados aún", Toast.LENGTH_SHORT).show();
                 }
                 else{
                     actionBar.setDisplayHomeAsUpEnabled(true);
@@ -93,6 +132,27 @@ public class Ventas extends Fragment implements KeyListener {
                 }else{
                     Toast.makeText(getContext(), "No hay ventas realizadas el día de hoy", Toast.LENGTH_SHORT).show();
                 }
+            }
+        });
+
+        nuevo.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View view) {
+                new nuevoProducto_DialogFragment().show(fm, "Modificar_producto");
+
+            }
+        });
+        imprimir.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                existentes=db.rawQuery("select * from inventario where disponible=1" ,null);
+                if(existentes.moveToFirst()){
+                    findBT();
+                }
+                else{
+                    Toast.makeText(getContext(), "No hay productos aún", LENGTH_LONG).show();
+                }
+
             }
         });
         ///buscador
@@ -136,8 +196,25 @@ public class Ventas extends Fragment implements KeyListener {
         rellenado_total(getContext());
         return view;
     }
+    public static void numero_productos(Context context) {
+        existentes = db.rawQuery("select * from inventario where disponible=1", null);
+        if (existentes.moveToFirst()) {
+            productos.setText(String.valueOf(existentes.getCount())+ " productos" );
+        } else {
+            productos.setText("No hay productos aún");
+        }
+    }
+    public static void actualizar_disponibles(Context context, String producto) {
+        productoElegido= db.rawQuery("select idRemota from inventario where nombre_producto='"+producto+"'", null);
+        values.put("disponible", 0);
+        if(productoElegido.moveToFirst()){
+            db.update("inventario", values, "idRemota='" + productoElegido.getString(0) + "'", null);
+        }
+        rellenado_total(context);
+    }
     public static void rellenado_total(Context context){  ////volvemos a llenar el racycler despues de actualizar, o de una busqueda
-        fila=db.rawQuery("select nombre_producto, precio, codigo_barras, existente2 from inventario order by codigo_barras" ,null);
+       numero_productos(context);
+        fila=db.rawQuery("select nombre_producto, precio, codigo_barras, existente from inventario where disponible=1 order by codigo_barras" ,null);
 
         if(fila.moveToFirst()) {///si hay un elemento
             itemsProductos.clear();
@@ -153,42 +230,6 @@ public class Ventas extends Fragment implements KeyListener {
         recycler.setAdapter(adapter);
         adapter.notifyDataSetChanged();
     }
-
-
-    /*@Override
-    public boolean dispatchKeyEvent(KeyEvent event) {
-
-
-        try
-        {
-            if(event.getAction()== KeyEvent.ACTION_UP)
-            {
-
-                try {
-
-                    char pressedKey = (char) event.getUnicodeChar();
-                    Barcode += "" + pressedKey;
-
-                    //pass data to fragment
-                    WMSSCANFragment WMSSCANFragment = (WMSSCANFragment)getSupportFragmentManager().findFragmentByTag(mFragmentList.get(2).getTag());
-                    WMSSCANFragment.receivedKeyDownEvent(Barcode);
-
-
-                }catch (Exception error) {
-                    error.printStackTrace();
-                }
-
-                //Toast.makeText(getApplicationContext(), event.getAction() + " " + event.getKeyCode() + " - " + (char) event.getUnicodeChar(), Toast.LENGTH_SHORT).show();
-
-            }
-        }
-        catch (Exception ex)
-        {
-            ex.printStackTrace();
-        }
-
-        return true;
-    }*/
 
     @Override
     public int getInputType() {
@@ -227,6 +268,187 @@ public class Ventas extends Fragment implements KeyListener {
     public void clearMetaKeyState(View view, Editable content, int states) {
 
     }
+
+    void findBT() {
+        try {
+            mBluetoothAdapter = BluetoothAdapter.getDefaultAdapter();
+
+            if(mBluetoothAdapter == null) {
+                //Toast.makeText(getContext(), "Enciende la impresora", LENGTH_LONG).show();
+
+            }
+
+            if(!mBluetoothAdapter.isEnabled()) {
+                Intent enableBluetooth = new Intent(BluetoothAdapter.ACTION_REQUEST_ENABLE);
+                startActivityForResult(enableBluetooth, 0);
+            }
+
+            Set<BluetoothDevice> pairedDevices = mBluetoothAdapter.getBondedDevices();
+
+            if(pairedDevices.size() > 0) {
+                for (BluetoothDevice device : pairedDevices) {
+
+                    // RPP300 is the name of the bluetooth printer device
+                    // we got this name from the list of paired devices
+                    if (device.getName().equals("BlueTooth Printer")) {
+                        mmDevice = device;
+                        openBT();
+
+                        //insertarVenta();
+                        break;
+                    }
+                    else{  ///si no esta vinculado
+                        /*myLabel.setText("Revisa tu conexión con la impresora");   ///aquí sino está vinculado
+                        cancelar.setEnabled(true);
+                        aceptar.setEnabled(true);
+                        imprimir.setEnabled(true)*/
+                        Toast.makeText(getContext(), "Revisa la conexión con tu impresora", LENGTH_LONG).show();
+                    }
+                }
+            }
+
+        }catch(Exception e){
+            e.printStackTrace();
+        }
+    }
+
+    // tries to open a connection to the bluetooth printer device
+    void openBT() throws IOException {
+        try {
+            // Standard SerialPortService ID
+            UUID uuid = UUID.fromString("00001101-0000-1000-8000-00805f9b34fb");
+            mmSocket = mmDevice.createRfcommSocketToServiceRecord(uuid);
+            mmSocket.connect();
+            mmOutputStream = mmSocket.getOutputStream();
+            mmInputStream = mmSocket.getInputStream();
+
+            beginListenForData();
+
+
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+    }
+
+    /*
+     * after opening a connection to bluetooth printer device,
+     * we have to listen and check if a data were sent to be printed.*/
+
+    void beginListenForData() {
+        try {
+            final Handler handler = new Handler();
+
+            // this is the ASCII code for a newline character
+            final byte delimiter = 10;
+            stopWorker = false;
+            readBufferPosition = 0;
+            readBuffer = new byte[1024];
+            workerThread = new Thread(new Runnable() {
+                public void run() {
+
+                    while (!Thread.currentThread().isInterrupted() && !stopWorker) {
+
+                        try {
+
+                            int bytesAvailable = mmInputStream.available();
+
+                            if (bytesAvailable > 0) {
+
+                                byte[] packetBytes = new byte[bytesAvailable];
+                                mmInputStream.read(packetBytes);
+
+                                for (int i = 0; i < bytesAvailable; i++) {
+
+                                    byte b = packetBytes[i];
+                                    if (b == delimiter) {
+
+                                        byte[] encodedBytes = new byte[readBufferPosition];
+                                        System.arraycopy(
+                                                readBuffer, 0,
+                                                encodedBytes, 0,
+                                                encodedBytes.length
+                                        );
+
+                                        // specify US-ASCII encoding
+                                        final String data = new String(encodedBytes, "US-ASCII");
+                                        readBufferPosition = 0;
+
+                                        // tell the user data were sent to bluetooth printer device
+                                        handler.post(new Runnable() {
+                                            public void run() {
+                                                //myLabel.setText(data);
+
+                                            }
+                                        });
+
+                                    } else {
+                                        readBuffer[readBufferPosition++] = b;
+                                    }
+                                }
+                            }
+
+                        } catch (IOException ex) {
+                            stopWorker = true;
+                        }
+
+                    }
+                }
+            });
+
+            workerThread.start();
+            sendData();
+
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+    }
+
+    // this will send text data to be printed by the bluetooth printer
+    void sendData() throws IOException {
+        try {
+            String total=null;
+            filaProducto= db.rawQuery("select nombre_producto, precio, existente2 from inventario", null);
+
+            if (filaProducto.moveToFirst()) {///si hay un elemento
+                total="Productos: "+String.valueOf(filaProducto.getCount());
+                total += "\n \n";
+                mmOutputStream.write(total.getBytes());   ///// aqui imprime
+
+                String items=String.valueOf(filaProducto.getString(0)+"  $"+filaProducto.getString(1)+"  "+filaProducto.getString(2));
+                items += "\n";
+                mmOutputStream.write(items.getBytes());
+
+                while (filaProducto.moveToNext()) {
+                    items=String.valueOf(filaProducto.getString(0)+"  $"+filaProducto.getString(1)+"  "+filaProducto.getString(2));
+                    items += "\n";
+                    mmOutputStream.write(items.getBytes());
+                }
+            }
+            String gracias=" ";
+            gracias += "\n \n \n \n";
+
+            mmOutputStream.write(gracias.getBytes());   ///// aqui imprime
+            closeBT();
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+    }
+
+    // close the connection to bluetooth printer.
+    void closeBT() throws IOException {
+        try {
+            stopWorker = true;
+            mmOutputStream.close();
+            mmInputStream.close();
+            mmSocket.close();
+//            cancelar.setEnabled(true);
+            //          aceptar.setEnabled(true);
+            //         imprimir.setEnabled(true);
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+    }
+
 
 
     /*@Override

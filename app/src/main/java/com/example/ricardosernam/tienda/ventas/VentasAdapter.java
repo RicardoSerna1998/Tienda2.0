@@ -1,6 +1,8 @@
 package com.example.ricardosernam.tienda.ventas;
 
+import android.app.AlertDialog;
 import android.content.Context;
+import android.content.DialogInterface;
 import android.content.res.ColorStateList;
 import android.support.v4.app.FragmentManager;
 import android.support.v7.widget.RecyclerView;
@@ -32,13 +34,14 @@ public class VentasAdapter extends RecyclerView.Adapter <VentasAdapter.Productos
     public  class Productos_ventasViewHolder extends RecyclerView.ViewHolder{    ////clase donde van los elementos del cardview
         // Campos respectivos de un item
         public TextView producto, precio, existentes;
-        public Button modificar;
+        public Button modificar, eliminar;
         public Productos_ventasViewHolder(final View v) {   ////lo que se programe aqui es para cuando se le de clic a un item del recycler
             super(v);
             producto = v.findViewById(R.id.TVproducto);  ////Textview donde se coloca el nombre del producto
             precio=v.findViewById(R.id.TVprecio);
             existentes=v.findViewById(R.id.TVexistentes);
             modificar=v.findViewById(R.id.BtnmodificarProducto);
+            eliminar=v.findViewById(R.id.BtnEliminarProducto);
         }
     }
 
@@ -63,10 +66,10 @@ public class VentasAdapter extends RecyclerView.Adapter <VentasAdapter.Productos
             holder.existentes.setTextColor(ColorStateList.valueOf(rojo));
         }
         if(itemsProductos.get(position).getCodigo_barras().equals("null")) { ////0 son gramos
-            holder.existentes.setText(String.valueOf(df.format(itemsProductos.get(position).getExistentes())) +" Gramos aún");
+            holder.existentes.setText(String.valueOf(df.format(itemsProductos.get(position).getExistentes())) +" Gramos");
         }
         else{ //1 es piezas
-            holder.existentes.setText(String.valueOf(df.format(itemsProductos.get(position).getExistentes()) +" Pieza(s) aún"));
+            holder.existentes.setText(String.valueOf(df.format(itemsProductos.get(position).getExistentes()) +" Pieza(s)"));
         }
 
         holder.itemView.setOnClickListener(new View.OnClickListener() {
@@ -92,5 +95,30 @@ public class VentasAdapter extends RecyclerView.Adapter <VentasAdapter.Productos
                 }
             }
         });
+
+        ///para eliminar producto
+        holder.eliminar.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View view) {
+                final AlertDialog.Builder aceptarVenta = new AlertDialog.Builder(context);
+                aceptarVenta .setTitle("Cuidado");
+                aceptarVenta .setMessage("¿Seguro que quieres eliminar esta venta?");
+                aceptarVenta .setCancelable(false);
+                aceptarVenta .setPositiveButton("Confirmar", new DialogInterface.OnClickListener() {
+                    public void onClick(DialogInterface aceptarVenta , int id) {
+                        Ventas.actualizar_disponibles(context, itemsProductos.get(position).getNombre());
+                        aceptarVenta.dismiss();
+                    }
+
+                });
+                aceptarVenta .setNegativeButton("Cancelar", new DialogInterface.OnClickListener() {
+                    public void onClick(DialogInterface aceptarVenta, int id) {
+                        aceptarVenta .dismiss();
+                    }
+                });
+                aceptarVenta .show();
+            }
+        });
+
         }
     }

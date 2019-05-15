@@ -15,8 +15,6 @@
         android:layout_weight="1"
         android:orientation="vertical">
 
-
-
         <android.support.v7.widget.AppCompatTextView
             android:id="@+id/TVproducto"
             android:layout_width="match_parent"
@@ -44,30 +42,47 @@
             app:autoSizeTextType="uniform" />
     </LinearLayout>
     <LinearLayout
-        android:orientation="horizontal"
+        android:orientation="vertical"
         android:layout_width="match_parent"
         android:layout_height="match_parent"
         android:background="?attr/colorButtonNormal"
         android:backgroundTint="?attr/colorButtonNormal"
         android:layout_weight="2">
+        <LinearLayout
+            android:layout_width="wrap_content"
+            android:layout_height="match_parent"
+            android:orientation="horizontal"
+            android:layout_weight="1">
+            <Button
+                android:id="@+id/BtnmodificarProducto"
+                android:layout_weight="1"
+                android:layout_gravity="right"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:drawableRight="@mipmap/ic_border_color_black_24dp" />
+
+            <Button
+                android:id="@+id/BtnEliminarProducto"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_gravity="right"
+                android:layout_weight="1"
+                android:drawableRight="@mipmap/ic_delete_forever_black_24dp" />
+        </LinearLayout>
     <android.support.v7.widget.AppCompatTextView
         android:id="@+id/TVprecio"
         android:layout_width="match_parent"
+        android:background="@color/colorAccent"
         android:layout_height="match_parent"
         android:layout_weight="1"
-        android:gravity="center_vertical"
+        android:gravity="center"
         android:text="$10"
         app:autoSizeMaxTextSize="40sp"
         app:autoSizeMinTextSize="20sp"
         app:autoSizeStepGranularity="1sp"
         app:autoSizeTextType="uniform" />
-        <Button
-            android:id="@+id/BtnmodificarProducto"
-            android:layout_weight="1"
-            android:layout_gravity="right"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:drawableRight="@mipmap/ic_border_color_black_24dp" />
+
+
 
     </LinearLayout>
 

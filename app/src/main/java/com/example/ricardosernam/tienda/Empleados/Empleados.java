@@ -33,6 +33,7 @@ import com.example.ricardosernam.tienda.provider.ContractParaProductos;
 import com.example.ricardosernam.tienda.R;
 import com.example.ricardosernam.tienda.sync.SyncAdapter;
 import com.example.ricardosernam.tienda.utils.Constantes;
+import com.example.ricardosernam.tienda.ventas.Productos.nuevoProducto_DialogFragment;
 
 import java.io.IOException;
 import java.io.InputStream;
@@ -53,27 +54,13 @@ public class Empleados extends Fragment {     /////Fragment de categoria ventas
     public static SQLiteDatabase db;
     public static TextView nombre, datos;
     public static Button establecer, imprimir;
-    public static Button sync;
+    public static Button sync, nuevo;
     public static EditText ip;
     public static CheckBox online;
     public ContentValues values=new ContentValues();
     private static ArrayList<Empleados_class> itemsEmpleados = new ArrayList<>();  ///Arraylist que contiene los cardviews seleccionados de productos
 
     TextView myLabel;
-    // will enable user to enter any text to be printed
-    // android built in classes for bluetooth operations
-    BluetoothAdapter mBluetoothAdapter;
-    BluetoothSocket mmSocket;
-    BluetoothDevice mmDevice;
-
-    // needed for communication to bluetooth device / network
-    OutputStream mmOutputStream;
-    InputStream mmInputStream;
-    Thread workerThread;
-
-    byte[] readBuffer;
-    int readBufferPosition;
-    volatile boolean stopWorker;
 
     @Override
     public View onCreateView(LayoutInflater inflater, ViewGroup container, Bundle savedInstanceState) {
@@ -89,13 +76,20 @@ public class Empleados extends Fragment {     /////Fragment de categoria ventas
 
 
         establecer = view.findViewById(R.id.BtnEstablecer);
-        imprimir= view.findViewById(R.id.BtnImprimriInventario);
 
         sync = view.findViewById(R.id.BtnSync);
+        nuevo = view.findViewById(R.id.BtnAgregarEmpleado);
         recycler = view.findViewById(R.id.RVempleados); ///declaramos el recycler
 
         DatabaseHelper admin = new DatabaseHelper(getContext(), ContractParaProductos.DATABASE_NAME, null, ContractParaProductos.DATABASE_VERSION);
         db = admin.getWritableDatabase();
+
+        nuevo.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                new nuevoEmpleado_DialogFragment().show(fm, "Modificar_producto");
+            }
+        });
 
         establecer.setOnClickListener(new View.OnClickListener() {
             @Override
@@ -138,19 +132,6 @@ public class Empleados extends Fragment {     /////Fragment de categoria ventas
 
                     //SyncAdapter.sincronizarAhora(getContext(), true, 0, Constantes.INSERT_URL_TURNO);
                 }
-            }
-        });
-        imprimir.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View v) {
-                existentes=db.rawQuery("select * from inventario" ,null);
-                if(existentes.moveToFirst()){
-                    findBT();
-                }
-                else{
-                    Toast.makeText(getContext(), "No hay productos aún", LENGTH_LONG).show();
-                }
-
             }
         });
         online.setOnClickListener(new View.OnClickListener() {
@@ -266,185 +247,6 @@ public class Empleados extends Fragment {     /////Fragment de categoria ventas
         }
         else{
             datos.setText(" ");
-        }
-    }
-    void findBT() {
-        try {
-            mBluetoothAdapter = BluetoothAdapter.getDefaultAdapter();
-
-            if(mBluetoothAdapter == null) {
-                //Toast.makeText(getContext(), "Enciende la impresora", LENGTH_LONG).show();
-
-            }
-
-            if(!mBluetoothAdapter.isEnabled()) {
-                Intent enableBluetooth = new Intent(BluetoothAdapter.ACTION_REQUEST_ENABLE);
-                startActivityForResult(enableBluetooth, 0);
-            }
-
-            Set<BluetoothDevice> pairedDevices = mBluetoothAdapter.getBondedDevices();
-
-            if(pairedDevices.size() > 0) {
-                for (BluetoothDevice device : pairedDevices) {
-
-                    // RPP300 is the name of the bluetooth printer device
-                    // we got this name from the list of paired devices
-                    if (device.getName().equals("BlueTooth Printer")) {
-                        mmDevice = device;
-                        openBT();
-
-                        //insertarVenta();
-                        break;
-                    }
-                    else{  ///si no esta vinculado
-                        /*myLabel.setText("Revisa tu conexión con la impresora");   ///aquí sino está vinculado
-                        cancelar.setEnabled(true);
-                        aceptar.setEnabled(true);
-                        imprimir.setEnabled(true)*/
-                        Toast.makeText(getContext(), "Revisa la conexión con tu impresora", LENGTH_LONG).show();
-                    }
-                }
-            }
-
-        }catch(Exception e){
-            e.printStackTrace();
-        }
-    }
-
-    // tries to open a connection to the bluetooth printer device
-    void openBT() throws IOException {
-        try {
-            // Standard SerialPortService ID
-            UUID uuid = UUID.fromString("00001101-0000-1000-8000-00805f9b34fb");
-            mmSocket = mmDevice.createRfcommSocketToServiceRecord(uuid);
-            mmSocket.connect();
-            mmOutputStream = mmSocket.getOutputStream();
-            mmInputStream = mmSocket.getInputStream();
-
-            beginListenForData();
-
-
-        } catch (Exception e) {
-            e.printStackTrace();
-        }
-    }
-
-    /*
-     * after opening a connection to bluetooth printer device,
-     * we have to listen and check if a data were sent to be printed.*/
-
-    void beginListenForData() {
-        try {
-            final Handler handler = new Handler();
-
-            // this is the ASCII code for a newline character
-            final byte delimiter = 10;
-            stopWorker = false;
-            readBufferPosition = 0;
-            readBuffer = new byte[1024];
-            workerThread = new Thread(new Runnable() {
-                public void run() {
-
-                    while (!Thread.currentThread().isInterrupted() && !stopWorker) {
-
-                        try {
-
-                            int bytesAvailable = mmInputStream.available();
-
-                            if (bytesAvailable > 0) {
-
-                                byte[] packetBytes = new byte[bytesAvailable];
-                                mmInputStream.read(packetBytes);
-
-                                for (int i = 0; i < bytesAvailable; i++) {
-
-                                    byte b = packetBytes[i];
-                                    if (b == delimiter) {
-
-                                        byte[] encodedBytes = new byte[readBufferPosition];
-                                        System.arraycopy(
-                                                readBuffer, 0,
-                                                encodedBytes, 0,
-                                                encodedBytes.length
-                                        );
-
-                                        // specify US-ASCII encoding
-                                        final String data = new String(encodedBytes, "US-ASCII");
-                                        readBufferPosition = 0;
-
-                                        // tell the user data were sent to bluetooth printer device
-                                        handler.post(new Runnable() {
-                                            public void run() {
-                                                //myLabel.setText(data);
-
-                                            }
-                                        });
-
-                                    } else {
-                                        readBuffer[readBufferPosition++] = b;
-                                    }
-                                }
-                            }
-
-                        } catch (IOException ex) {
-                            stopWorker = true;
-                        }
-
-                    }
-                }
-            });
-
-            workerThread.start();
-            sendData();
-
-        } catch (Exception e) {
-            e.printStackTrace();
-        }
-    }
-
-    // this will send text data to be printed by the bluetooth printer
-    void sendData() throws IOException {
-        try {
-            String total=null;
-            filaProducto= db.rawQuery("select nombre_producto, precio, existente2 from inventario", null);
-
-            if (filaProducto.moveToFirst()) {///si hay un elemento
-                total="Productos: "+String.valueOf(filaProducto.getCount());
-                total += "\n \n";
-                mmOutputStream.write(total.getBytes());   ///// aqui imprime
-
-                String items=String.valueOf(filaProducto.getString(0)+"  $"+filaProducto.getString(1)+"  "+filaProducto.getString(2));
-                items += "\n";
-                mmOutputStream.write(items.getBytes());
-
-                while (filaProducto.moveToNext()) {
-                    items=String.valueOf(filaProducto.getString(0)+"  $"+filaProducto.getString(1)+"  "+filaProducto.getString(2));
-                    items += "\n";
-                    mmOutputStream.write(items.getBytes());
-                }
-            }
-            String gracias=" ";
-            gracias += "\n \n \n \n";
-
-            mmOutputStream.write(gracias.getBytes());   ///// aqui imprime
-            closeBT();
-        } catch (Exception e) {
-            e.printStackTrace();
-        }
-    }
-
-    // close the connection to bluetooth printer.
-    void closeBT() throws IOException {
-        try {
-            stopWorker = true;
-            mmOutputStream.close();
-            mmInputStream.close();
-            mmSocket.close();
-//            cancelar.setEnabled(true);
-  //          aceptar.setEnabled(true);
-   //         imprimir.setEnabled(true);
-        } catch (Exception e) {
-            e.printStackTrace();
         }
     }
 

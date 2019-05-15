@@ -20,22 +20,27 @@
             android:orientation="horizontal"
             android:layout_width="match_parent"
             android:layout_height="wrap_content">
-            <Button
-                android:id="@+id/BtnImprimriInventario"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:text="Imprimir&#10;inventario"/>
+
         </LinearLayout>
 
         <TextView
-            android:layout_marginBottom="10dp"
+            android:id="@+id/TVempleados"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:gravity="center_horizontal"
             android:layout_gravity="center_horizontal"
+            android:layout_marginBottom="10dp"
+            android:gravity="center_horizontal"
             android:text="Empleados"
             android:textColor="@android:color/background_light"
             android:textSize="25dp" />
+
+        <Button
+            android:id="@+id/BtnAgregarEmpleado"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:drawableTop="@mipmap/baseline_add_circle_outline_black_24"
+            android:text=" Nuevo "
+            android:textSize="18dp" />
         <LinearLayout
             android:orientation="horizontal"
             android:layout_width="match_parent"

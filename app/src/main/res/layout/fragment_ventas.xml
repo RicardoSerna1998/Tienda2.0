@@ -10,12 +10,21 @@
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:orientation="horizontal">
+
         <Button
-            android:id="@+id/BtnHistorial"
+            android:id="@+id/BtnAgregarProducto"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:drawableTop="@mipmap/ic_history_black_24dp"
-            android:text=" Historial "
+            android:drawableTop="@mipmap/baseline_add_circle_outline_black_24"
+            android:text=" Nuevo "
+            android:textSize="18dp" />
+
+        <Button
+            android:id="@+id/BtnImprimriInventario"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:drawableTop="@mipmap/baseline_print_black_24"
+            android:text="Imprimir"
             android:textSize="18dp" />
 
         <android.support.v7.widget.SearchView
@@ -25,7 +34,13 @@
             android:layout_weight="1"
             android:hint="Ingresa el nombre o código"
             android:inputType="text" />
-
+        <Button
+            android:id="@+id/BtnHistorial"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:drawableTop="@mipmap/ic_history_black_24dp"
+            android:text=" Historial "
+            android:textSize="18dp" />
         <Button
             android:id="@+id/BtnCarrito"
             android:layout_width="wrap_content"
@@ -34,13 +49,14 @@
             android:text=" Carrito "
             android:textSize="18dp" />
     </LinearLayout>
+
     <TextView
-        android:id="@+id/textView3"
+        android:id="@+id/TVproductos"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:gravity="center"
-        android:textSize="18dp"
-        android:text="Productos" />
+        android:text="Productos"
+        android:textSize="18dp" />
     <ScrollView
         android:layout_width="match_parent"
         android:layout_height="match_parent"

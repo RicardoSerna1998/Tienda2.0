@@ -170,6 +170,7 @@ public static class Columnas implements BaseColumns {
 
     /////////////////inventario
     public final static String ID_PRODUCTO = "id_producto";
+    public final static String DISPONIBLE = "disponible";
     public final static String LOCAL= "local";
     public final static String NOMBRE_PRODUCTO = "nombre_producto";
     public final static String PRECIO = "precio";

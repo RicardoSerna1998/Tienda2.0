@@ -8,5 +8,10 @@
     <string name="account_type">com.example.ricardosernam.tienda.account</string>
     <string name="provider_authority">com.example.ricardosernam.tienda</string>
 
+    <string-array name="Puestos">
+        <item>Admin.</item>
+        <item>Cajero</item>
+        <item>Otro</item>
+    </string-array>
 
 </resources>
