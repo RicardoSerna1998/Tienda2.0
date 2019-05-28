@@ -46,7 +46,7 @@ import static android.content.ContentValues.TAG;
 import static android.widget.Toast.LENGTH_LONG;
 
 public class Empleados extends Fragment {     /////Fragment de categoria ventas
-    public static Cursor empleados, informacion, estado, empleadosActivos, ipMode, onlineMode, datosAun, filaProducto, existentes;
+    public static Cursor empleados, informacion, estado, empleadosActivos, ipMode, onlineMode, datosAun, empleadoElegido, existentes;
     public static RecyclerView recycler;
     public static RecyclerView.Adapter adapter;
     public static RecyclerView.LayoutManager lManager;
@@ -54,10 +54,10 @@ public class Empleados extends Fragment {     /////Fragment de categoria ventas
     public static SQLiteDatabase db;
     public static TextView nombre, datos;
     public static Button establecer, imprimir;
-    public static Button sync, nuevo;
+    public static Button sync, nuevo, editarInfo;
     public static EditText ip;
     public static CheckBox online;
-    public ContentValues values=new ContentValues();
+    public static ContentValues values=new ContentValues();
     private static ArrayList<Empleados_class> itemsEmpleados = new ArrayList<>();  ///Arraylist que contiene los cardviews seleccionados de productos
 
     TextView myLabel;
@@ -79,6 +79,7 @@ public class Empleados extends Fragment {     /////Fragment de categoria ventas
 
         sync = view.findViewById(R.id.BtnSync);
         nuevo = view.findViewById(R.id.BtnAgregarEmpleado);
+        editarInfo = view.findViewById(R.id.BtnmodificarInfo);
         recycler = view.findViewById(R.id.RVempleados); ///declaramos el recycler
 
         DatabaseHelper admin = new DatabaseHelper(getContext(), ContractParaProductos.DATABASE_NAME, null, ContractParaProductos.DATABASE_VERSION);
@@ -87,7 +88,15 @@ public class Empleados extends Fragment {     /////Fragment de categoria ventas
         nuevo.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-                new nuevoEmpleado_DialogFragment().show(fm, "Modificar_producto");
+                new usuariosDialogFragment("Administrador", "Agregar").show(fm, "Empleados");
+
+            }
+        });
+        editarInfo.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                new usuariosDialogFragment("Administrador", "Negocio").show(fm, "Empleados");
+
             }
         });
 
@@ -195,10 +204,17 @@ public class Empleados extends Fragment {     /////Fragment de categoria ventas
         relleno(getContext());
         return view;
     }
-
+    public static void actualizar_disponibles(Context context, String empleado) {
+        empleadoElegido= db.rawQuery("select _id from empleados where nombre_empleado='"+empleado+"'", null);
+        values.put("disponible", 0);
+        if(empleadoElegido.moveToFirst()){
+            db.update("empleados", values, "_id='" + empleadoElegido.getString(0) + "'", null);
+        }
+        Empleados.relleno(context);;
+    }
     public static void relleno(Context context) {    ///llamamos el adapter del recycler
         itemsEmpleados.clear();
-        empleados = db.rawQuery("select nombre_empleado, tipo_empleado, activo, codigo from empleados ORDER by tipo_empleado, activo desc", null);
+        empleados = db.rawQuery("select nombre_empleado, tipo_empleado, activo, codigo from empleados where disponible=1 ORDER by tipo_empleado, activo desc", null);
         informacion= db.rawQuery("select nombre_negocio, direccion, telefono from informacion", null);
         ipMode=db.rawQuery("select ip from estados" ,null);
         onlineMode=db.rawQuery("select online from estados" ,null);
@@ -216,7 +232,7 @@ public class Empleados extends Fragment {     /////Fragment de categoria ventas
                 online.setChecked(false);
             }
         }
-        if(informacion.moveToFirst()){
+        if(informacion.moveToFirst()){ ////datos del negocio
             //if(!informacion.getString(0).isEmpty()){
             nombre.setVisibility(View.VISIBLE);
             nombre.setText(informacion.getString(0)+" "+informacion.getString(1)+" "+informacion.getString(2));
@@ -235,7 +251,7 @@ public class Empleados extends Fragment {     /////Fragment de categoria ventas
             }
         }
         datosAsincronizar();
-        adapter = new Empleados_ventasAdapter(itemsEmpleados, fm);///llamamos al adaptador y le enviamos el array como parametro
+        adapter = new Empleados_ventasAdapter(itemsEmpleados, fm, context);///llamamos al adaptador y le enviamos el array como parametro
         lManager = new LinearLayoutManager(context);  //declaramos el layoutmanager
         recycler.setLayoutManager(lManager);
         recycler.setAdapter(adapter);

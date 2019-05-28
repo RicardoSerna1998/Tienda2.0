@@ -49,6 +49,7 @@ import java.util.UUID;
 
 import static android.widget.Toast.LENGTH_LONG;
 
+@SuppressLint("ValidFragment")
 public class Ventas extends Fragment implements KeyListener {
     private SearchView nombreCodigo;
     private static Cursor fila, filaBusqueda, datoEscaneado, ventas, existentes, filaProducto, productoElegido;
@@ -61,6 +62,8 @@ public class Ventas extends Fragment implements KeyListener {
     private Button carrito, historial, imprimir, nuevo;
     private android.support.v7.app.ActionBar actionBar;
     public static ContentValues values = new ContentValues();
+    public String tipo_empleado;
+    public static int permisos;
 
     private static ArrayList<Productos_class> itemsProductos= new ArrayList <>(); ///Arraylist que contiene los productos///
 
@@ -80,6 +83,10 @@ public class Ventas extends Fragment implements KeyListener {
     int readBufferPosition;
     volatile boolean stopWorker;
 
+    @SuppressLint("ValidFragment")
+    public Ventas(String tipo_empleado){
+        this.tipo_empleado=tipo_empleado;
+    }
     @Override
     public void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -104,7 +111,17 @@ public class Ventas extends Fragment implements KeyListener {
 
         fm=getFragmentManager();
 
-
+        //tipo_empleado='Admin.' and activo=1 or tipo_empleado='Cajero'
+        if(!tipo_empleado.equals("Admin.")){ //no tiene permisos
+           imprimir.setVisibility(View.GONE); ///////ocultar boton de nuevo, imprimir, editar y eliminar producto
+           nuevo.setVisibility(View.GONE);
+           permisos=0;
+        }
+        else{  ///tiene permisos
+            imprimir.setVisibility(View.VISIBLE); ///////ocultar boton de nuevo, imprimir, editar y eliminar producto
+            nuevo.setVisibility(View.VISIBLE);
+            permisos=1;
+        }
         carrito.setOnClickListener(new View.OnClickListener() {
             @SuppressLint("NewApi")
             @RequiresApi(api = Build.VERSION_CODES.LOLLIPOP)
@@ -205,10 +222,10 @@ public class Ventas extends Fragment implements KeyListener {
         }
     }
     public static void actualizar_disponibles(Context context, String producto) {
-        productoElegido= db.rawQuery("select idRemota from inventario where nombre_producto='"+producto+"'", null);
+        productoElegido= db.rawQuery("select _id from inventario where nombre_producto='"+producto+"'", null);
         values.put("disponible", 0);
         if(productoElegido.moveToFirst()){
-            db.update("inventario", values, "idRemota='" + productoElegido.getString(0) + "'", null);
+            db.update("inventario", values, "_id='" + productoElegido.getString(0) + "'", null);
         }
         rellenado_total(context);
     }
@@ -223,7 +240,7 @@ public class Ventas extends Fragment implements KeyListener {
                 itemsProductos.add(new Productos_class(fila.getString(0), fila.getFloat(1), fila.getString(2), fila.getFloat(3)));
             }
         }
-        adapter = new VentasAdapter(itemsProductos, fm, context);///llamamos al adaptador y le enviamos el array como parametro
+        adapter = new VentasAdapter(itemsProductos, fm, context, permisos);///llamamos al adaptador y le enviamos el array como parametro
         //lManager = new LinearLayoutManager(this.getActivity());  //declaramos el layoutmanager
         lManager = new GridLayoutManager(context, 3);  //declaramos el layoutmanager
         recycler.setLayoutManager(lManager);

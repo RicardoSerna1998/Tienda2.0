@@ -2,8 +2,10 @@ package com.example.ricardosernam.tienda.Empleados;
 
 
 import android.annotation.SuppressLint;
+import android.app.AlertDialog;
 import android.content.ContentValues;
 import android.content.Context;
+import android.content.DialogInterface;
 import android.database.Cursor;
 import android.database.sqlite.SQLiteDatabase;
 import android.os.Build;
@@ -41,7 +43,8 @@ public class usuariosDialogFragment extends android.support.v4.app.DialogFragmen
     private static ContentValues values, values2;
     private static SQLiteDatabase db;
     private actualizado Interfaz;
-    private Cursor activos, empladosActualizados;
+    private Cursor activos, empladosActualizados, seleccionados;
+    public static android.support.v4.app.FragmentManager fm;
 
 
     public usuariosDialogFragment(String usuario, String sesion, String codigo, String puesto) {
@@ -49,6 +52,10 @@ public class usuariosDialogFragment extends android.support.v4.app.DialogFragmen
         this.sesion = sesion;
         this.codigo = codigo;
         this.puesto = puesto;
+    }
+    public usuariosDialogFragment(String usuario, String sesion) {
+        this.usuario = usuario;
+        this.sesion = sesion;
     }
 
     @Override
@@ -75,58 +82,94 @@ public class usuariosDialogFragment extends android.support.v4.app.DialogFragmen
         values = new ContentValues();
         values2 = new ContentValues();
 
-
+        fm = getFragmentManager();
         DatabaseHelper admin = new DatabaseHelper(getContext(), ContractParaProductos.DATABASE_NAME, null, ContractParaProductos.DATABASE_VERSION);
         db = admin.getWritableDatabase();
         empladosActualizados = db.rawQuery("select nombre_empleado, tipo_empleado, activo, codigo from empleados ORDER by tipo_empleado, activo desc", null);
 
         aceptar.setOnClickListener(new View.OnClickListener() {
-
             @Override
             public void onClick(View view) {
                 java.util.Calendar c = java.util.Calendar.getInstance();
                 SimpleDateFormat df = new SimpleDateFormat("yyyy-MM-dd HH:mm");
                 formattedDate = df.format(c.getTime());
+                seleccionados = db.rawQuery("select codigo from empleados where nombre_empleado='"+usuario+"'", null);
 
-                if (contrasena.getText().toString().equals(codigo)) {  //codigo correcto
-                    if (sesion.equals("Iniciar Sesión")) {
-                        if (puesto.equals("Admin.") || puesto.equals("Cajero")) {
-                            activos = db.rawQuery("select * from empleados where tipo_empleado='Admin.' and activo=1 or tipo_empleado='Cajero' and activo=1", null);
-                            if (activos.moveToFirst()) {  ///hay un cajero/admin activo
-                                Toast.makeText(getContext(), "Cerrar sesión de otro cajero", Toast.LENGTH_LONG).show();
-                            } else {  ///
+                if (seleccionados.moveToFirst()) {
+                    if (contrasena.getText().toString().equals(seleccionados.getString(0))) {  //codigo correcto
+                        if (sesion.equals("Iniciar Sesión")) {
+                            if (puesto.equals("Admin.") || puesto.equals("Cajero")) {
+                                activos = db.rawQuery("select * from empleados where tipo_empleado='Admin.' and activo=1 or tipo_empleado='Cajero' and activo=1", null);
+                                if (activos.moveToFirst()) {  ///hay un cajero/admin activo
+                                    Toast.makeText(getContext(), "Cerrar sesión de otro cajero", Toast.LENGTH_LONG).show();
+                                } else {  ///
+                                    values.put("activo", 1);
+                                    db.update("empleados", values, "nombre_empleado='" + usuario + "'", null);
+                                    MainActivity.empleadoActivo.setText("Cajer@: " + usuario);
+
+                                    insertarTurno(getContext());
+                                    relleno(getContext());
+                                    getDialog().dismiss();
+                                    getFragmentManager().beginTransaction().replace(R.id.LLprincipal, new Ventas(puesto), "Ventas").addToBackStack("Ventas").commit(); ///cambio de fragment
+                                }
+                            } else {///otro puesto que no implica caja
                                 values.put("activo", 1);
                                 db.update("empleados", values, "nombre_empleado='" + usuario + "'", null);
-                                MainActivity.empleadoActivo.setText("Cajer@: " + usuario);
-
-                                insertarTurno(getContext());
                                 relleno(getContext());
+                                insertarTurno(getContext());
                                 getDialog().dismiss();
-                                getFragmentManager().beginTransaction().replace(R.id.LLprincipal, new Ventas(), "Ventas").addToBackStack("Ventas").commit(); ///cambio de fragment
                             }
-                        } else {///otro puesto que no implica caja
-                            values.put("activo", 1);
+                            ////insertamos incio de turno
+                        }
+                        ///////////////////// Cerrar sesión
+                        else if (sesion.equals("Cerrar Sesión")) {
+                            if (puesto.equals("Admin.") || puesto.equals("Cajero")) {
+                                MainActivity.empleadoActivo.setText("");
+                            }
+                            values.put("activo", 0);
                             db.update("empleados", values, "nombre_empleado='" + usuario + "'", null);
+                            actualizarTurno(getContext());
                             relleno(getContext());
-                            insertarTurno(getContext());
                             getDialog().dismiss();
                         }
-                        ////insertamos incio de turno
-                    }
-                    ///////////////////// Cerrar sesión
-                    else {
-                        if (puesto.equals("Admin.") || puesto.equals("Cajero")) {
-                            MainActivity.empleadoActivo.setText("");
+                         else if (sesion.equals("Agregar")) {   ////Agregar Empleado
+                            getDialog().dismiss();
+                            new nuevoEmpleado_DialogFragment().show(fm, "Modificar_producto");
+                         }
+                        else if (sesion.equals("Modificar")) {   ////Modificar Empleado
+                            getDialog().dismiss();
+                            new modificarEmpleado_DialogFragment(codigo, puesto).show(fm, "Modificar_producto");
                         }
-                        values.put("activo", 0);
-                        db.update("empleados", values, "nombre_empleado='" + usuario + "'", null);
-                        actualizarTurno(getContext());
-                        relleno(getContext());
-                        getDialog().dismiss();
+                        else if (sesion.equals("Negocio")) {   ////Datos del negocio
+                            getDialog().dismiss();
+                            new negocio_DialogFragment().show(fm, "Modificar_Info");
+                        }
+                        else if (sesion.equals("Eliminar")) {   ///Eliminar emppleado
+                            getDialog().dismiss();
+                            final AlertDialog.Builder aceptarVenta = new AlertDialog.Builder(getContext());
+                            aceptarVenta.setTitle("Cuidado");
+                            aceptarVenta.setMessage("¿Seguro que quieres eliminar esta empleado?");
+                            aceptarVenta.setCancelable(false);
+                            aceptarVenta.setPositiveButton("Confirmar", new DialogInterface.OnClickListener() {
+                                public void onClick(DialogInterface aceptarVenta, int id) {
+                                    Empleados.actualizar_disponibles(getContext(), codigo);
+                                    aceptarVenta.dismiss();
+                                }
+
+                            });
+                            aceptarVenta.setNegativeButton("Cancelar", new DialogInterface.OnClickListener() {
+                                public void onClick(DialogInterface aceptarVenta, int id) {
+                                    aceptarVenta.dismiss();
+                                }
+                            });
+                            aceptarVenta.show();
+
+                        }
+
+                        ///SyncAdapter.sincronizarAhora(getContext(), true, 0, Constantes.UPDATE_URL_EMPLEADOS);   ///actualizamos el inventario disponible a cero
+                    } else {  //codigo incorrecto
+                        contrasena.setError("Contraseña invalida");
                     }
-                    ///SyncAdapter.sincronizarAhora(getContext(), true, 0, Constantes.UPDATE_URL_EMPLEADOS);   ///actualizamos el inventario disponible a cero
-                } else {  //codigo incorrecto
-                    contrasena.setError("Contraseña invalida");
                 }
             }
         });

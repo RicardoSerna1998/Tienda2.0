@@ -22,25 +22,23 @@ import android.widget.Toast;
 import com.example.ricardosernam.tienda.DatabaseHelper;
 import com.example.ricardosernam.tienda.R;
 import com.example.ricardosernam.tienda.provider.ContractParaProductos;
-import com.example.ricardosernam.tienda.ventas.Ventas;
 
 import java.text.DecimalFormat;
 
 @SuppressLint("ValidFragment")
-public class nuevoEmpleado_DialogFragment extends android.support.v4.app.DialogFragment {
+public class negocio_DialogFragment extends android.support.v4.app.DialogFragment {
     private LinearLayout botones;
-    private Cursor empleadoElegido;
+    private Cursor negocio;
     private SQLiteDatabase db;
     private Button aceptar, cancelar,escanear;
     private TextView  unidad;
-    private EditText nombre, codigo;
-    private Spinner puesto;
+    private EditText nombre, direccion, telefono;
     private static ContentValues values;
 
     private int tipo;
 
     @SuppressLint("ValidFragment")
-    public nuevoEmpleado_DialogFragment() {
+    public negocio_DialogFragment() {
 
     }
 
@@ -48,11 +46,11 @@ public class nuevoEmpleado_DialogFragment extends android.support.v4.app.DialogF
     @Override
     public View onCreateView(final LayoutInflater inflater, final ViewGroup container, final Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-        View rootView = inflater.inflate(R.layout.dialog_fragment_nuevo_empleado, container);
+        View rootView = inflater.inflate(R.layout.dialog_fragment_negocio, container);
         this.getDialog().setTitle("Modificar");///cambiamos titulo del DialogFragment
-        puesto = rootView.findViewById(R.id.SPNpuestoEmpleado);
-        nombre = rootView.findViewById(R.id.ETnombreEmpleado);
-        codigo = rootView.findViewById(R.id.ETcodigoEmpleado);
+        nombre = rootView.findViewById(R.id.ETnombreNegocio);
+        direccion = rootView.findViewById(R.id.ETdireccion);
+        telefono = rootView.findViewById(R.id.ETtelefono);
 
 
         botones = rootView.findViewById(R.id.LLBotones);
@@ -67,33 +65,28 @@ public class nuevoEmpleado_DialogFragment extends android.support.v4.app.DialogF
 
         getDialog().getWindow().setSoftInputMode(WindowManager.LayoutParams.SOFT_INPUT_STATE_ALWAYS_HIDDEN);
 
+        negocio = db.rawQuery("select nombre_negocio, direccion, telefono from informacion", null);
+
+        if(negocio.moveToFirst()){
+            nombre.setText(negocio.getString(0));
+            direccion.setText(negocio.getString(1));
+            telefono.setText(negocio.getString(2));
+        }
         //cantidad.setShowSoftInputOnFocus(false);
 
         aceptar.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View view) {
                 if(validar()) {   /////si  ya se pago todo bien
-                    values.put("disponible", 1);
-                    values.put("activo", 0);
-                    values.put("nombre_empleado", nombre.getText().toString());
-                    values.put("codigo", codigo.getText().toString());
+                    values.put("nombre_negocio", nombre.getText().toString());
+                    values.put("direccion", direccion.getText().toString());
+                    values.put("telefono", telefono.getText().toString());
 
+                    db.update("informacion", values, "_id='" + 1 + "'", null);
 
-                    if (puesto.getSelectedItemId() == 0) {
-                        values.put("tipo_empleado", "Admin.");
-                    }
-                    else if(puesto.getSelectedItemId()==1){
-                        values.put("tipo_empleado", "Cajero");
-                    }
-                    else{
-                        values.put("tipo_empleado", "Otro");
-                    }
-
-                        db.insertOrThrow("empleados", null, values);
                         Empleados.relleno(getContext());
-
                         dismiss();
-                        Toast.makeText(getContext(), "Empleado Agregado", Toast.LENGTH_LONG).show();
+                        Toast.makeText(getContext(), "Información  modificada", Toast.LENGTH_LONG).show();
                 }
             }
         });
@@ -107,18 +100,10 @@ public class nuevoEmpleado_DialogFragment extends android.support.v4.app.DialogF
     }
     public Boolean validar(){
          Boolean validado=true;
-        empleadoElegido = db.rawQuery("select * from empleados where nombre_empleado='"+nombre.getText().toString() +"'", null);
+
         if(((TextUtils.isEmpty(nombre.getText().toString().trim())))) {  /// es vacio
             validado=false;
             nombre.setError("Ingresa un nombre");
-        }
-        else if(((TextUtils.isEmpty(codigo.getText().toString().trim()))) || codigo.getText().length()<5) {  /// es vacio
-            validado=false;
-            codigo.setError("Necesitas contraseña mayor a 4 caracteres");
-        }
-        else if(empleadoElegido.moveToFirst()) {  /// es vacio
-            validado=false;
-           Toast.makeText(getContext(), "Empleado existente", Toast.LENGTH_LONG).show();
         }
         return validado;
     }

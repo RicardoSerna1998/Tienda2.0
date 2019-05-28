@@ -38,6 +38,7 @@ public class DatabaseHelper extends SQLiteOpenHelper {
         String cmd0 = "CREATE TABLE " + ContractParaProductos.EMPLEADOS + " (" +
                 ContractParaProductos.Columnas._ID + " INTEGER PRIMARY KEY AUTOINCREMENT, " +
                 ContractParaProductos.Columnas.ID_REMOTA + " INT," +
+                ContractParaProductos.Columnas.DISPONIBLE+ " INT," +
                 ContractParaProductos.Columnas.NOMBRE_EMPLEADO + " TEXT, " +
                 ContractParaProductos.Columnas.TIPO_EMPLEADO + " TEXT, " +
                 ContractParaProductos.Columnas.CODIGO+ " VARCHAR(45), " +
@@ -73,11 +74,12 @@ public class DatabaseHelper extends SQLiteOpenHelper {
         database.execSQL("INSERT INTO inventario (idRemota, disponible, nombre_producto, precio, codigo_barras, existente) values (3, 0, 'Cebolla', 15.0, 'null', 3000)");
         database.execSQL("INSERT INTO inventario (idRemota, disponible, nombre_producto, precio, codigo_barras, existente) values (4, 1, 'Trojan', 60.0 , '022600972525', 30)");
 
-        database.execSQL("INSERT INTO empleados (idRemota, codigo, nombre_empleado, tipo_empleado, activo) values (1,'juan', 'Juan', 'Cajero', 1)");
-        database.execSQL("INSERT INTO empleados (idRemota, codigo, nombre_empleado, tipo_empleado, activo) values (2,'manuel', 'Manuel', 'Admin.', 0)");
-        database.execSQL("INSERT INTO empleados (idRemota, codigo, nombre_empleado, tipo_empleado, activo) values (3,'maria', 'María', 'Cerillo',0)");
+        database.execSQL("INSERT INTO empleados (idRemota, codigo, nombre_empleado, tipo_empleado, activo, disponible) values (1,'juan', 'Juan', 'Cajero', 0, 1)");
+        database.execSQL("INSERT INTO empleados (idRemota, codigo, nombre_empleado, tipo_empleado, activo, disponible) values (2,'manuel', 'Manuel', 'Admin.', 0, 1)");
+        database.execSQL("INSERT INTO empleados (idRemota, codigo, nombre_empleado, tipo_empleado, activo, disponible) values (3,'admin', 'Administrador', 'Admin.', 0, 1)");
+        database.execSQL("INSERT INTO empleados (idRemota, codigo, nombre_empleado, tipo_empleado, activo, disponible) values (4,'maria', 'María', 'Cerillo',0, 1)");
 
-        database.execSQL("INSERT INTO informacion (nombre_negocio, direccion, telefono) values ('Frueteria Gonazalez', 'Av. Media Luna #121', '4921721298')");
+        database.execSQL("INSERT INTO informacion (nombre_negocio, direccion, telefono) values ('Punto de venta', 'México', '+52 0000000000')");
 
         String cmd4 = "CREATE TABLE " + ContractParaProductos.VENTAS + " (" +
                 ContractParaProductos.Columnas._ID + " INTEGER PRIMARY KEY AUTOINCREMENT, " +

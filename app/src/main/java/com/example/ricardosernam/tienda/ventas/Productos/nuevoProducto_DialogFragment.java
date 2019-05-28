@@ -28,7 +28,7 @@ import java.text.DecimalFormat;
 @SuppressLint("ValidFragment")
 public class nuevoProducto_DialogFragment extends android.support.v4.app.DialogFragment {
     private LinearLayout botones;
-    private Cursor productoElegido;
+    public static Cursor productoElegido;
     private SQLiteDatabase db;
     private Button aceptar, cancelar,escanear;
     private TextView  unidad;
@@ -113,6 +113,8 @@ public class nuevoProducto_DialogFragment extends android.support.v4.app.DialogF
     }
     public Boolean validar(){
          Boolean validado=true;
+        productoElegido = db.rawQuery("select * from inventario where nombre_producto='"+nombre.getText().toString() +"'", null);
+
         if(((TextUtils.isEmpty(nombre.getText().toString().trim())))) {  /// es vacio
             validado=false;
             nombre.setError("Ingresa un nombre");
@@ -132,6 +134,10 @@ public class nuevoProducto_DialogFragment extends android.support.v4.app.DialogF
         else if((Float.parseFloat(existente.getText().toString().trim())==0)) {  /// es vacio
             validado=false;
             existente.setError("Ingresa una cantidad valida");
+        }
+        else if(productoElegido.moveToFirst()) {  /// es vacio
+            validado=false;
+            Toast.makeText(getContext(), "Producto existente", Toast.LENGTH_LONG).show();
         }
         return validado;
     }

@@ -10,6 +10,7 @@ import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.Button;
+import android.widget.LinearLayout;
 import android.widget.TextView;
 import android.widget.Toast;
 
@@ -25,16 +26,19 @@ public class VentasAdapter extends RecyclerView.Adapter <VentasAdapter.Productos
     private ArrayList<Productos_class> itemsProductos;
     private FragmentManager fm;
     private Context context;
+    private int permisos;
 
-    public VentasAdapter(ArrayList<Productos_class> itemsProductos, FragmentManager fm, Context context) {  ///recibe el arrayProductos como parametro y la interface
+    public VentasAdapter(ArrayList<Productos_class> itemsProductos, FragmentManager fm, Context context, int permisos) {  ///recibe el arrayProductos como parametro y la interface
         this.itemsProductos=itemsProductos;
         this.fm=fm;
         this.context=context;
+        this.permisos=permisos;
     }
     public  class Productos_ventasViewHolder extends RecyclerView.ViewHolder{    ////clase donde van los elementos del cardview
         // Campos respectivos de un item
         public TextView producto, precio, existentes;
         public Button modificar, eliminar;
+        public LinearLayout botones;
         public Productos_ventasViewHolder(final View v) {   ////lo que se programe aqui es para cuando se le de clic a un item del recycler
             super(v);
             producto = v.findViewById(R.id.TVproducto);  ////Textview donde se coloca el nombre del producto
@@ -42,6 +46,7 @@ public class VentasAdapter extends RecyclerView.Adapter <VentasAdapter.Productos
             existentes=v.findViewById(R.id.TVexistentes);
             modificar=v.findViewById(R.id.BtnmodificarProducto);
             eliminar=v.findViewById(R.id.BtnEliminarProducto);
+            botones=v.findViewById(R.id.LLBotonesProductos);
         }
     }
 
@@ -62,6 +67,17 @@ public class VentasAdapter extends RecyclerView.Adapter <VentasAdapter.Productos
         holder.precio.setText("$"+String.valueOf(itemsProductos.get(position).getPrecio()));
         DecimalFormat df = new DecimalFormat("#.00");
 
+        if (permisos==1){  ///hay permisos para modificar e eliminar
+            holder.botones.setVisibility(View.VISIBLE);
+
+            /*holder.modificar.setVisibility(View.VISIBLE);
+            holder.eliminar.setVisibility(View.VISIBLE);*/
+        }else{
+            holder.botones.setVisibility(View.GONE);
+
+           /* holder.modificar.setVisibility(View.GONE);
+            holder.eliminar.setVisibility(View.GONE);*/
+        }
         if(itemsProductos.get(position).getExistentes()<=0) { ////0 son gramos
             holder.existentes.setTextColor(ColorStateList.valueOf(rojo));
         }

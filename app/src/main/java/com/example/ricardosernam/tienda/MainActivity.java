@@ -71,12 +71,12 @@ public class MainActivity extends AppCompatActivity  {
     public boolean onOptionsItemSelected(MenuItem item) {
         int id = item.getItemId();
 
-        activos= db.rawQuery("select * from empleados where tipo_empleado='Admin.' and activo=1 or tipo_empleado='Cajero' and activo=1", null);
+        activos= db.rawQuery("select tipo_empleado from empleados where tipo_empleado='Admin.' and activo=1 or tipo_empleado='Cajero' and activo=1", null);
 
         if (id == R.id.action_user) {
             if(activos.moveToFirst()){   ////hay alguien activo en caja
                 if(getSupportFragmentManager().findFragmentByTag("Empleados").isVisible()){  //estoy en empleados
-                    getSupportFragmentManager().beginTransaction().replace(R.id.LLprincipal, new Ventas(), "Ventas").addToBackStack("Ventas").commit(); ///cambio de fragment
+                    getSupportFragmentManager().beginTransaction().replace(R.id.LLprincipal, new Ventas(activos.getString(0)), "Ventas").addToBackStack("Ventas").commit(); ///cambio de fragment
 
                     estado=db.rawQuery("select ip, online from estados" ,null);
 
